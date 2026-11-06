@@ -14,7 +14,6 @@ jobs:
           mv modules/jarvis-native packages/jarvis-native
           sed -i '/useExpoPublishing/d' packages/jarvis-native/android/build.gradle
           printf '{"name":"jarvis-native","version":"0.1.0"}\n' > packages/jarvis-native/package.json
-          ls -la packages/jarvis-native
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -30,11 +29,20 @@ jobs:
       - name: Prebuild
         run: npx expo prebuild --platform android --clean
         working-directory: jarvis
-      - name: Debug modules
+      - name: Debug versions
         working-directory: jarvis
         run: |
+          echo "=== VERSIONS ==="
+          npm ls expo expo-modules-autolinking expo-modules-core 2>&1 | head -12
+          echo "=== STATUS-BAR CONFIG ==="
+          cat node_modules/expo-status-bar/expo-module.config.json
+          echo "=== STATUS-BAR GRADLE ==="
+          grep -n "version\|group" node_modules/expo-status-bar/android/build.gradle | head -8
+          echo "=== STATUS-BAR PACKAGE ==="
+          grep '"version"' node_modules/expo-status-bar/package.json
+          echo "=== FIRST 4 MODULES ==="
           npx expo-modules-autolinking resolve --platform android --json > /tmp/al.json || true
-          node -e "const j=require('/tmp/al.json');(j.modules||[]).forEach((m,i)=>console.log(i,m.packageName,JSON.stringify(m.projects&&m.projects[0]&&m.projects[0].publication)))" || true
+          node -e "const j=require('/tmp/al.json');(j.modules||[]).slice(0,4).forEach((m,i)=>console.log(i,m.packageName,m.version,JSON.stringify(m.projects&&m.projects[0]&&m.projects[0].publication)))" || true
       - name: Gradle build
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
         working-directory: jarvis/android
