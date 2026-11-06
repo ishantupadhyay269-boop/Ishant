@@ -7,6 +7,39 @@ jobs:
       - uses: actions/checkout@v4
       - name: Unzip project
         run: for f in jarvis-android-complete*.zip; do unzip -oq "$f"; done
+      - name: Write correct package.json
+        working-directory: jarvis
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "jarvis",
+            "version": "1.0.0",
+            "main": "index.ts",
+            "dependencies": {
+              "@react-native-async-storage/async-storage": "2.2.0",
+              "@react-native-voice/voice": "^3.2.4",
+              "expo": "~54.0.0",
+              "expo-battery": "~10.0.8",
+              "expo-build-properties": "~1.0.10",
+              "expo-dev-client": "~6.0.21",
+              "expo-intent-launcher": "~13.0.8",
+              "expo-local-authentication": "~17.0.9",
+              "expo-modules-core": "~3.0.30",
+              "expo-network": "~8.0.8",
+              "expo-secure-store": "~15.0.8",
+              "expo-speech": "~14.0.8",
+              "expo-status-bar": "~3.0.9",
+              "react": "19.1.0",
+              "react-native": "0.81.5",
+              "react-native-safe-area-context": "~5.6.0"
+            },
+            "devDependencies": {
+              "@types/react": "~19.1.10",
+              "typescript": "~5.9.2"
+            }
+          }
+          EOF
+          rm -f package-lock.json
       - name: Move native module to a normal package
         working-directory: jarvis
         run: |
@@ -26,23 +59,10 @@ jobs:
         run: |
           npm install --legacy-peer-deps
           npm install --legacy-peer-deps ./packages/jarvis-native
+          npm ls expo expo-battery expo-modules-core 2>&1 | head -10
       - name: Prebuild
         run: npx expo prebuild --platform android --clean
         working-directory: jarvis
-      - name: Debug versions
-        working-directory: jarvis
-        run: |
-          echo "=== VERSIONS ==="
-          npm ls expo expo-modules-autolinking expo-modules-core 2>&1 | head -12
-          echo "=== STATUS-BAR CONFIG ==="
-          cat node_modules/expo-status-bar/expo-module.config.json
-          echo "=== STATUS-BAR GRADLE ==="
-          grep -n "version\|group" node_modules/expo-status-bar/android/build.gradle | head -8
-          echo "=== STATUS-BAR PACKAGE ==="
-          grep '"version"' node_modules/expo-status-bar/package.json
-          echo "=== FIRST 4 MODULES ==="
-          npx expo-modules-autolinking resolve --platform android --json > /tmp/al.json || true
-          node -e "const j=require('/tmp/al.json');(j.modules||[]).slice(0,4).forEach((m,i)=>console.log(i,m.packageName,m.version,JSON.stringify(m.projects&&m.projects[0]&&m.projects[0].publication)))" || true
       - name: Gradle build
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
         working-directory: jarvis/android
