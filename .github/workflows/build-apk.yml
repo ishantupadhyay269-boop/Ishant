@@ -63,6 +63,17 @@ jobs:
       - name: Prebuild
         run: npx expo prebuild --platform android --clean
         working-directory: jarvis
+      - name: Remove old support libraries
+        working-directory: jarvis
+        run: |
+          cat >> android/build.gradle <<'EOF'
+
+          allprojects {
+            configurations.all {
+              exclude group: 'com.android.support'
+            }
+          }
+          EOF
       - name: Gradle build
         run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
         working-directory: jarvis/android
