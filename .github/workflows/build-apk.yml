@@ -47,9 +47,13 @@ jobs:
           mv modules/jarvis-native packages/jarvis-native
           sed -i '/useExpoPublishing/d' packages/jarvis-native/android/build.gradle
           printf '{"name":"jarvis-native","version":"0.1.0"}\n' > packages/jarvis-native/package.json
-          - name: Show Kotlin file
-          working-directory: jarvis
-          run: head -30 packages/jarvis-native/android/src/main/java/expo/modules/jarvisnative/JarvisNativeModule.kt
+      - name: Fix Kotlin import
+        working-directory: jarvis
+        run: |
+          sed -i 's/import expo\.modules\.kotlin\.Exceptions/import expo.modules.kotlin.exception.Exceptions/' packages/jarvis-native/android/src/main/java/expo/modules/jarvisnative/JarvisNativeModule.kt
+      - name: Show Kotlin file
+        working-directory: jarvis
+        run: head -30 packages/jarvis-native/android/src/main/java/expo/modules/jarvisnative/JarvisNativeModule.kt
       - uses: actions/setup-node@v4
         with:
           node-version: 20
